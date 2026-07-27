@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flipkart Panel Automation – Row Panel</title>
+    <title>Flipkart + Gosats Automation</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -11,6 +11,7 @@
             background: #0b0b0b;
             color: #eee;
             padding: 20px;
+            min-height: 100vh;
         }
         .container { max-width: 1400px; margin: 0 auto; }
         .header {
@@ -22,7 +23,22 @@
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
-        h1 { color: #6acfff; font-size: 24px; margin: 0; }
+        h1 {
+            color: #6acfff;
+            font-size: 24px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        h1 .badge-version {
+            font-size: 10px;
+            background: #1a3a5a;
+            color: #6acfff;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 400;
+        }
         .status-summary {
             display: flex;
             gap: 20px;
@@ -35,13 +51,18 @@
         }
         .status-summary span { font-size: 14px; }
         .status-summary .count { font-weight: bold; color: #6acfff; }
+        .status-summary .count.done { color: #4ade80; }
+        .status-summary .count.eligible { color: #60a5fa; }
+        .status-summary .count.deleted { color: #f472b6; }
+        .status-summary .count.error { color: #f87171; }
+
         .controls {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
             margin-bottom: 20px;
             background: #111;
-            padding: 15px;
+            padding: 15px 20px;
             border-radius: 12px;
             border: 1px solid #222;
             align-items: center;
@@ -56,11 +77,16 @@
             color: #ddd;
             border: 1px solid #333;
             border-radius: 8px;
-            padding: 8px;
+            padding: 8px 12px;
             font-family: 'Courier New', monospace;
             font-size: 13px;
             resize: vertical;
             min-height: 80px;
+            transition: border-color 0.3s;
+        }
+        .controls .panel-area textarea:focus {
+            border-color: #6acfff;
+            outline: none;
         }
         .controls .panel-area .link-count {
             font-size: 12px;
@@ -69,34 +95,55 @@
             text-align: right;
         }
         .btn {
-            padding: 6px 14px;
+            padding: 8px 16px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s ease;
             font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+            min-width: 70px;
         }
         .btn-primary { background: #ef4444; color: white; }
-        .btn-primary:hover { background: #dc2626; }
+        .btn-primary:hover { background: #dc2626; transform: translateY(-1px); box-shadow: 0 4px 15px rgba(239,68,68,0.3); }
         .btn-secondary { background: #333; color: #ddd; }
-        .btn-secondary:hover { background: #555; }
+        .btn-secondary:hover { background: #444; transform: translateY(-1px); }
         .btn-success { background: #22c55e; color: white; }
-        .btn-success:hover { background: #16a34a; }
+        .btn-success:hover { background: #16a34a; transform: translateY(-1px); box-shadow: 0 4px 15px rgba(34,197,94,0.3); }
         .btn-danger { background: #dc2626; color: white; }
-        .btn-danger:hover { background: #b91c1c; }
-        .btn-sm { padding: 4px 10px; font-size: 12px; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-danger:hover { background: #b91c1c; transform: translateY(-1px); }
+        .btn-purple { background: #8b5cf6; color: white; }
+        .btn-purple:hover { background: #7c3aed; transform: translateY(-1px); box-shadow: 0 4px 15px rgba(139,92,246,0.3); }
+        .btn-json { background: #0ea5e9; color: white; }
+        .btn-json:hover { background: #0284c7; transform: translateY(-1px); box-shadow: 0 4px 15px rgba(14,165,233,0.3); }
+        .btn-json.active { background: #22c55e; }
+        .btn-json.active:hover { background: #16a34a; }
+        .btn-sm { padding: 4px 12px; font-size: 12px; min-width: 50px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        
         .mode-select {
             display: flex;
             gap: 10px;
             align-items: center;
             background: #1a1a1a;
-            padding: 4px 12px;
-            border-radius: 6px;
+            padding: 4px 14px;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
         }
-        .mode-select label { color: #aaa; font-size: 13px; }
-        .mode-select input[type="radio"] { accent-color: #ef4444; }
+        .mode-select label { color: #aaa; font-size: 13px; cursor: pointer; }
+        .mode-select input[type="radio"] { accent-color: #ef4444; cursor: pointer; }
+
+        .controls-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
 
         .row-container {
             display: flex;
@@ -108,48 +155,63 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             background: #111;
             border: 1px solid #2a2a2a;
             border-radius: 10px;
-            padding: 12px 16px;
-            transition: border-color 0.2s;
+            padding: 10px 14px;
+            transition: all 0.3s ease;
         }
-        .row-card:hover { border-color: #444; }
+        .row-card:hover { border-color: #444; background: #141414; }
         .row-card .phone {
             font-family: 'Courier New', monospace;
             color: #ccc;
-            min-width: 120px;
+            min-width: 110px;
             font-weight: 600;
+            font-size: 14px;
         }
         .row-card .device {
             font-family: 'Courier New', monospace;
             color: #666;
-            font-size: 12px;
-            min-width: 140px;
+            font-size: 11px;
+            min-width: 120px;
         }
         .row-card .status {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
-            min-width: 120px;
+            min-width: 100px;
             color: #aaa;
         }
         .row-card .status .badge {
             display: inline-block;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 11px;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 10px;
             font-weight: 600;
+            transition: all 0.3s ease;
         }
         .badge-starting { background: #1a3a5a; color: #7abfff; }
         .badge-otp { background: #3a4a1a; color: #bfff7a; }
         .badge-verify { background: #4a3a1a; color: #ffd77a; }
         .badge-verified { background: #1a4a2a; color: #7affaa; }
         .badge-games { background: #3a1a4a; color: #d07aff; }
+        .badge-gosats_login { background: #4a3a4a; color: #ffd700; }
+        .badge-gosats_new { background: #3a4a6a; color: #7ad0ff; }
+        .badge-gosats_onboarding_start { background: #4a4a6a; color: #ffd700; }
+        .badge-gosats_onboarding { background: #2a3a4a; color: #ffd700; }
+        .badge-gosats_onboarded { background: #1a4a2a; color: #ffd700; }
+        .badge-gosats_swapped { background: #1a4a2a; color: #ffd700; }
+        .badge-gosats_no_coins { background: #4a3a3a; color: #ffd700; }
+        .badge-swapping { background: #4a4a1a; color: #ffd700; }
+        .badge-swapping_completed { background: #1a4a2a; color: #4ade80; }
+        .badge-swap_verified { background: #1a4a2a; color: #4ade80; }
+        .badge-swapping_retry { background: #4a4a1a; color: #ffd700; }
         .badge-deleting { background: #4a1a1a; color: #ff7a7a; }
         .badge-done { background: #1a3a2a; color: #7affaa; }
         .badge-error { background: #4a1a1a; color: #ff7a7a; }
         .badge-waiting { background: #4a4a1a; color: #ffff7a; animation: pulse 1s infinite; }
+        .badge-idle { background: #222; color: #666; }
+        .badge-json { background: #0a3a5a; color: #7ad0ff; }
         @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 
         .row-card .input-group {
@@ -157,7 +219,7 @@
             gap: 6px;
             align-items: center;
             flex: 1;
-            min-width: 150px;
+            min-width: 200px;
         }
         .row-card .input-group input {
             background: #1a1a1a;
@@ -165,30 +227,49 @@
             border-radius: 6px;
             padding: 4px 8px;
             color: white;
-            font-size: 13px;
+            font-size: 12px;
             flex: 1;
-            min-width: 80px;
+            min-width: 100px;
+            transition: border-color 0.3s;
         }
         .row-card .input-group input:focus {
             border-color: #ef4444;
             outline: none;
         }
         .row-card .input-group input:disabled { opacity: 0.4; }
+        .row-card .input-group input.json-input-field {
+            border-color: #0ea5e9;
+            background: #0a1a2a;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+        }
+        .row-card .input-group input.json-input-field:focus {
+            border-color: #22c55e;
+        }
+        .row-card .input-group input.json-input-field.has-json {
+            border-color: #22c55e;
+            background: #0a1a0a;
+        }
+        .row-card .input-group input.json-input-field.invalid-json {
+            border-color: #ef4444;
+            background: #1a0a0a;
+        }
         .row-card .actions {
             display: flex;
             gap: 6px;
             align-items: center;
         }
+        .row-card .actions .btn { min-width: 44px; padding: 4px 8px; font-size: 12px; }
         .row-card .coins {
             font-weight: 600;
             color: #ffd700;
-            min-width: 60px;
-            font-size: 13px;
+            min-width: 40px;
+            font-size: 12px;
         }
         .row-card .eligible {
             font-weight: 600;
-            min-width: 60px;
-            font-size: 13px;
+            min-width: 50px;
+            font-size: 12px;
         }
         .row-card .eligible.yes { color: #4ade80; }
         .row-card .eligible.no { color: #f87171; }
@@ -198,10 +279,10 @@
             border: 1px solid #222;
             border-radius: 8px;
             padding: 10px;
-            max-height: 200px;
+            max-height: 150px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 12px;
+            font-size: 11px;
             color: #888;
             margin-top: 15px;
         }
@@ -218,8 +299,8 @@
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
             justify-content: center;
             align-items: center;
             z-index: 100;
@@ -227,76 +308,143 @@
         .modal.active { display: flex; }
         .modal-content {
             background: #1a1a1a;
-            padding: 25px;
+            padding: 30px;
             border-radius: 16px;
-            max-width: 600px;
+            max-width: 550px;
             width: 90%;
             border: 1px solid #333;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
         }
-        .modal-content h3 { margin-bottom: 12px; color: #ddd; }
-        .modal-content textarea {
+        .modal-content h3 {
+            margin-bottom: 8px;
+            color: #ddd;
+            font-size: 20px;
+        }
+        .modal-content .modal-sub {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .modal-content textarea, .modal-content .json-input {
             width: 100%;
             background: #0d0d0d;
             color: #ddd;
             border: 1px solid #333;
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             font-family: 'Courier New', monospace;
             font-size: 13px;
             resize: vertical;
             min-height: 120px;
+            transition: border-color 0.3s;
+        }
+        .modal-content textarea:focus, .modal-content .json-input:focus {
+            border-color: #6acfff;
+            outline: none;
+        }
+        .modal-content .json-input {
+            min-height: 60px;
+            padding: 10px 12px;
+        }
+        .modal-content .json-input.invalid {
+            border-color: #ef4444;
+            background: #1a0a0a;
+        }
+        .modal-content .json-input.valid {
+            border-color: #22c55e;
+            background: #0a1a0a;
         }
         .modal-content .modal-actions {
             display: flex;
             gap: 10px;
             justify-content: flex-end;
-            margin-top: 12px;
+            margin-top: 16px;
         }
+        .modal-content .modal-actions .btn { min-width: 80px; justify-content: center; }
+        .modal-content .json-status {
+            font-size: 12px;
+            margin-top: 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+        .modal-content .json-status.success { color: #4ade80; background: #0a1a0a; }
+        .modal-content .json-status.error { color: #f87171; background: #1a0a0a; }
+        .modal-content .json-status.info { color: #60a5fa; background: #0a1a2a; }
 
         .flex { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .gap-1 { gap: 4px; }
-        .mt-1 { margin-top: 6px; }
         .text-muted { color: #666; font-size: 12px; }
-        .w-full { width: 100%; }
-        .help-text { font-size: 12px; color: #555; margin-top: 4px; }
+        .help-text { font-size: 11px; color: #555; margin-top: 3px; }
         .sample-btn { background: #2a5a2a; color: #8f8; }
         .sample-btn:hover { background: #3a7a3a; }
+        .start-btn { background: #22c55e; color: #111; }
+        .start-btn:hover { background: #16a34a; }
+
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #111; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .controls { padding: 12px; flex-direction: column; align-items: stretch; }
+            .controls-right { margin-left: 0; justify-content: center; }
+            .status-summary { gap: 10px; font-size: 12px; }
+            .row-card { padding: 8px 10px; }
+            .row-card .phone { min-width: 80px; font-size: 12px; }
+            .row-card .device { min-width: 80px; font-size: 10px; }
+            .row-card .input-group { flex-wrap: wrap; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>⛓️ Flipkart Automation – Row Panel</h1>
+        <h1>
+            ⛓️ Flipkart + Gosats Automation
+            <span class="badge-version">v3.1</span>
+        </h1>
         <div><span id="connection-status" style="color: #888; font-size: 13px;">● Connecting...</span></div>
     </div>
 
     <div class="status-summary" id="summary">
-        <span>Total: <span class="count" id="totalCount">0</span></span>
-        <span>Done: <span class="count" id="doneCount">0</span></span>
-        <span>Eligible: <span class="count" id="eligibleCount">0</span></span>
-        <span>Deleted: <span class="count" id="deletedCount">0</span></span>
-        <span>Errors: <span class="count" id="errorCount">0</span></span>
+        <span>📊 Total: <span class="count" id="totalCount">0</span></span>
+        <span>✅ Done: <span class="count done" id="doneCount">0</span></span>
+        <span>🎯 Eligible: <span class="count eligible" id="eligibleCount">0</span></span>
+        <span>🗑️ Deleted: <span class="count deleted" id="deletedCount">0</span></span>
+        <span>❌ Errors: <span class="count error" id="errorCount">0</span></span>
     </div>
 
     <div class="controls">
         <div class="panel-area">
-            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 3px;">Panel Links (one per line)</label>
+            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 3px;">📡 Panel Links (one per line)</label>
             <textarea id="panel-links" placeholder="https://profexpanel.netlify.app/?s=... or raw Firebase URL"></textarea>
             <div class="link-count" id="linkCount">Links: 0</div>
-            <div class="help-text">Paste encoded links or raw Firebase URLs.</div>
         </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-            <div class="mode-select">
-                <label><input type="radio" name="mode" value="check" checked> Check</label>
-                <label><input type="radio" name="mode" value="full"> Full</label>
+        
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="btn-group">
+                <button class="btn btn-primary" id="startAllBtn" onclick="startAll()">▶ Start All</button>
+                <button class="btn btn-secondary" id="stopAllBtn" onclick="stopAll()" disabled>⏹ Stop</button>
+                <button class="btn btn-success btn-sm" onclick="fetchDevices()">🔄 Fetch</button>
+                <button class="btn btn-secondary btn-sm" onclick="addRow()">➕ Add</button>
+                <button class="btn btn-secondary btn-sm" onclick="openBulk()">📋 Bulk</button>
+                <button class="btn btn-secondary btn-sm" onclick="removeAllRows()">🗑️ Clear</button>
+                <button class="btn sample-btn btn-sm" onclick="loadSampleRows()">📂 Sample</button>
+                <button class="btn btn-danger btn-sm" onclick="resetAll()">🔄 Reset</button>
             </div>
-            <button class="btn btn-primary" id="startAllBtn" onclick="startAll()">▶ Start All</button>
-            <button class="btn btn-secondary" id="stopAllBtn" onclick="stopAll()" disabled>⏹ Stop All</button>
-            <button class="btn btn-success" onclick="fetchDevices()">🔄 Fetch Devices</button>
-            <button class="btn btn-secondary" onclick="addRow()">➕ Add Row</button>
-            <button class="btn btn-secondary" onclick="openBulk()">📋 Bulk Add</button>
-            <button class="btn btn-secondary" onclick="removeAllRows()">🗑️ Clear All</button>
-            <button class="btn sample-btn" onclick="loadSampleRows()">📂 Load Sample</button>
+        </div>
+
+        <div class="controls-right">
+            <div class="mode-select">
+                <label><input type="radio" name="mode" value="check"> 🔍 Check</label>
+                <label><input type="radio" name="mode" value="full" checked> ⚡ Full</label>
+            </div>
+            <button class="btn btn-json" id="jsonModeBtn" onclick="toggleJsonMode()">
+                📄 Global JSON
+            </button>
         </div>
     </div>
 
@@ -310,15 +458,32 @@
 <!-- Bulk Add Modal -->
 <div class="modal" id="bulkModal">
     <div class="modal-content">
-        <h3>Bulk Add Devices</h3>
-        <p class="text-muted">Paste one per line: <code>phone device_id</code> or just <code>device_id</code> (if "Device ID only" checked below).</p>
+        <h3>📋 Bulk Add Devices</h3>
+        <p class="modal-sub">Paste one per line: <code>phone device_id</code> or just <code>device_id</code></p>
         <textarea id="bulkText" placeholder="9723259509 f08d7f90cb359ed7&#10;f2aba219a2caacd7"></textarea>
         <div style="margin: 8px 0;">
             <label><input type="checkbox" id="bulkDevicesOnly"> Input are device IDs only</label>
         </div>
         <div class="modal-actions">
             <button class="btn btn-secondary" onclick="closeBulk()">Cancel</button>
-            <button class="btn btn-primary" onclick="addBulk()">Add Devices</button>
+            <button class="btn btn-primary" onclick="addBulk()">➕ Add</button>
+        </div>
+    </div>
+</div>
+
+<!-- Global JSON Modal -->
+<div class="modal" id="jsonModal">
+    <div class="modal-content">
+        <h3>📄 Global JSON Session</h3>
+        <p class="modal-sub">Paste JSON session to apply to all devices (overrides per‑device JSON)</p>
+        <textarea id="jsonInput" class="json-input" placeholder='{"at": "eyJ...", "sn": "VI...", "accountId": "ACC..."}'></textarea>
+        <div id="jsonStatus" class="json-status info">ℹ️ Paste valid JSON session data</div>
+        <div style="font-size: 11px; color: #555; margin-top: 6px;">
+            Required: <code>at</code>, <code>sn</code>, <code>accountId</code>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeJsonModal()">Cancel</button>
+            <button class="btn btn-json" id="jsonLoginConfirm" onclick="confirmJsonLogin()">🔑 Apply</button>
         </div>
     </div>
 </div>
@@ -333,17 +498,15 @@
     let rowData = {};
     let summary = { total: 0, done: 0, eligible: 0, deleted: 0, error: 0 };
     let pendingInputs = {};
+    let runningTasks = new Set();
+    let globalJsonMode = false;
+    let globalJsonData = null;
 
     const SAMPLE_DEVICES = [
         { phone: '9723259509', device: 'f08d7f90cb359ed7' },
         { phone: '7877113085', device: 'ec8ecffd950715da' },
         { phone: '9573563052', device: 'eafeb8fe9f977e6e' },
         { phone: '8401298542', device: 'e7d6d3753bb10b04' },
-        { phone: '8360546719', device: 'e721a85440d4e9a2' },
-        { phone: '7698928344', device: 'd9e47414f4fe33cd' },
-        { phone: '8147475479', device: '8ed12e47cabe54be' },
-        { phone: '9945509837', device: '7fec69e72528e53f' },
-        { phone: '9592234377', device: '5087d899b03f255d' }
     ];
 
     // ============================================================
@@ -375,8 +538,11 @@
                 const key = data.device;
                 if (!rows[key]) return;
                 updateRow(key, data);
-                if (data.status === 'done' || data.status === 'error') {
-                    summary.done++;
+                if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+                    if (data.status !== 'done') {
+                        summary.done++;
+                    }
+                    runningTasks.delete(key);
                     updateSummary();
                 }
                 if (data.deleted) {
@@ -385,6 +551,7 @@
                 }
                 addLog(data.phone || key, `${data.status}: ${data.message || ''}`);
             } else if (type === 'await_input') {
+                // Still support OTP input if needed (but confirm_swap is removed)
                 const key = data.device;
                 if (!rows[key]) return;
                 showInput(key, data.type, data.message);
@@ -395,18 +562,20 @@
                     alert('No online devices found in the panel.');
                     return;
                 }
-                // Remove existing rows silently
-                for (const k in rows) {
-                    rows[k].remove();
+                let added = 0;
+                const existingDevices = new Set();
+                for (const key in rowData) {
+                    existingDevices.add(rowData[key].device);
                 }
-                rows = {};
-                rowData = {};
-                summary = { total: 0, done: 0, eligible: 0, deleted: 0, error: 0 };
-                updateSummary();
                 for (const dev of devices) {
-                    addRow(dev.phone, dev.device);
+                    if (!existingDevices.has(dev.device)) {
+                        addRow(dev.phone, dev.device);
+                        existingDevices.add(dev.device);
+                        added++;
+                    }
                 }
-                addLog('System', `Fetched ${devices.length} devices from panel.`);
+                addLog('System', `Fetched ${devices.length} devices. Added ${added} new.`);
+                if (added === 0) alert('All fetched devices already in the list.');
             } else if (type === 'error') {
                 addLog('Error', data.message);
             }
@@ -456,6 +625,188 @@
     });
 
     // ============================================================
+    // GLOBAL JSON MODE
+    // ============================================================
+    function toggleJsonMode() {
+        if (!globalJsonMode) {
+            openJsonModal();
+        } else {
+            globalJsonMode = false;
+            globalJsonData = null;
+            document.getElementById('jsonModeBtn').classList.remove('active');
+            document.getElementById('jsonModeBtn').textContent = '📄 Global JSON';
+            addLog('System', 'Global JSON mode disabled');
+            // Enable per-row JSON fields
+            document.querySelectorAll('.json-input-field').forEach(el => {
+                el.disabled = false;
+                el.placeholder = 'Paste JSON session...';
+            });
+        }
+    }
+
+    // ============================================================
+    // GLOBAL JSON MODAL
+    // ============================================================
+    function openJsonModal() {
+        document.getElementById('jsonModal').classList.add('active');
+        document.getElementById('jsonInput').value = '';
+        document.getElementById('jsonStatus').className = 'json-status info';
+        document.getElementById('jsonStatus').textContent = 'ℹ️ Paste valid JSON session data';
+        document.getElementById('jsonInput').className = 'json-input';
+        document.getElementById('jsonLoginConfirm').disabled = false;
+    }
+
+    function closeJsonModal() {
+        document.getElementById('jsonModal').classList.remove('active');
+    }
+
+    function confirmJsonLogin() {
+        const input = document.getElementById('jsonInput');
+        const status = document.getElementById('jsonStatus');
+        const text = input.value.trim();
+        
+        if (!text) {
+            status.className = 'json-status error';
+            status.textContent = '❌ Please paste JSON data';
+            input.className = 'json-input invalid';
+            return;
+        }
+
+        try {
+            const data = JSON.parse(text);
+            
+            const required = ['at', 'sn', 'accountId'];
+            const missing = required.filter(f => !data[f]);
+            if (missing.length) {
+                status.className = 'json-status error';
+                status.textContent = `❌ Missing: ${missing.join(', ')}`;
+                input.className = 'json-input invalid';
+                return;
+            }
+
+            if (typeof data.at !== 'string' || data.at.length < 10) {
+                status.className = 'json-status error';
+                status.textContent = '❌ Invalid "at" token';
+                input.className = 'json-input invalid';
+                return;
+            }
+
+            if (typeof data.sn !== 'string' || data.sn.length < 5) {
+                status.className = 'json-status error';
+                status.textContent = '❌ Invalid "sn" token';
+                input.className = 'json-input invalid';
+                return;
+            }
+
+            globalJsonData = data;
+            globalJsonMode = true;
+            document.getElementById('jsonModeBtn').classList.add('active');
+            document.getElementById('jsonModeBtn').textContent = '✅ Global JSON Active';
+            
+            status.className = 'json-status success';
+            status.textContent = '✅ JSON validated! Global mode active.';
+            input.className = 'json-input valid';
+            
+            // Disable per-row JSON fields
+            document.querySelectorAll('.json-input-field').forEach(el => {
+                el.disabled = true;
+                el.placeholder = 'Global JSON active';
+                el.value = '';
+                el.classList.remove('has-json', 'invalid-json');
+            });
+            // Clear any per-row jsonData
+            for (const key in rowData) {
+                rowData[key].jsonData = null;
+            }
+            
+            addLog('System', 'Global JSON mode activated');
+            
+            setTimeout(() => {
+                closeJsonModal();
+            }, 1500);
+
+        } catch (e) {
+            status.className = 'json-status error';
+            status.textContent = `❌ Invalid JSON: ${e.message}`;
+            input.className = 'json-input invalid';
+            document.getElementById('jsonLoginConfirm').disabled = true;
+        }
+    }
+
+    document.getElementById('jsonInput').addEventListener('input', function() {
+        const status = document.getElementById('jsonStatus');
+        if (this.value.trim()) {
+            const text = this.value.trim();
+            try {
+                JSON.parse(text);
+                status.className = 'json-status info';
+                status.textContent = '✅ JSON format looks valid. Click "Apply" to confirm.';
+                this.className = 'json-input valid';
+                document.getElementById('jsonLoginConfirm').disabled = false;
+            } catch (e) {
+                status.className = 'json-status error';
+                status.textContent = `⚠️ Invalid JSON: ${e.message}`;
+                this.className = 'json-input invalid';
+                document.getElementById('jsonLoginConfirm').disabled = true;
+            }
+        } else {
+            status.className = 'json-status info';
+            status.textContent = 'ℹ️ Paste valid JSON session data';
+            this.className = 'json-input';
+            document.getElementById('jsonLoginConfirm').disabled = false;
+        }
+    });
+
+    // ============================================================
+    // PER-ROW JSON
+    // ============================================================
+    function validatePerRowJson(key) {
+        const input = document.getElementById(`jsoninput-${key}`);
+        if (!input) return;
+        const text = input.value.trim();
+        const row = rowData[key];
+        if (!row) return;
+
+        if (!text) {
+            row.jsonData = null;
+            input.classList.remove('has-json', 'invalid-json');
+            input.placeholder = 'Paste JSON session...';
+            return;
+        }
+
+        try {
+            const data = JSON.parse(text);
+            // Basic validation
+            if (data.at && data.sn && data.accountId) {
+                row.jsonData = data;
+                input.classList.add('has-json');
+                input.classList.remove('invalid-json');
+                input.placeholder = '✅ JSON loaded';
+            } else {
+                row.jsonData = null;
+                input.classList.remove('has-json');
+                input.classList.add('invalid-json');
+                input.placeholder = '❌ Missing fields';
+            }
+        } catch (e) {
+            row.jsonData = null;
+            input.classList.remove('has-json');
+            input.classList.add('invalid-json');
+            input.placeholder = '❌ Invalid JSON';
+        }
+    }
+
+    function clearPerRowJson(key) {
+        const input = document.getElementById(`jsoninput-${key}`);
+        if (!input) return;
+        input.value = '';
+        if (rowData[key]) rowData[key].jsonData = null;
+        input.classList.remove('has-json', 'invalid-json');
+        input.placeholder = 'Paste JSON session...';
+        addLog('System', `Cleared JSON for ${key}`);
+    }
+
+    // ============================================================
     // ROW OPERATIONS
     // ============================================================
     function createRowKey(phone, device) { return `${device}_${phone}`; }
@@ -477,31 +828,45 @@
         const row = document.createElement('div');
         row.className = 'row-card';
         row.dataset.key = key;
+        
+        const jsonDisabled = globalJsonMode ? 'disabled' : '';
+        const jsonPlaceholder = globalJsonMode ? 'Global JSON active' : 'Paste JSON session...';
+        
         row.innerHTML = `
-            <span class="phone">${phone}</span>
-            <span class="device">${device}</span>
-            <span class="status"><span class="badge badge-starting">Idle</span></span>
+            <span class="phone">📱 ${phone}</span>
+            <span class="device">🖥️ ${device}</span>
+            <span class="status"><span class="badge badge-idle">⏸️ Idle</span></span>
             <div class="input-group">
-                <input type="text" id="input-${key}" placeholder="Input" disabled>
-                <button class="btn btn-primary btn-sm send-btn" id="send-${key}" onclick="sendInput('${key}')" disabled>Send</button>
+                <input type="text" class="json-input-field" id="jsoninput-${key}" placeholder="${jsonPlaceholder}" ${jsonDisabled}>
+                <button class="btn btn-sm btn-danger" onclick="clearPerRowJson('${key}')" ${jsonDisabled ? 'disabled' : ''}>✕ Clear</button>
             </div>
             <span class="coins">—</span>
             <span class="eligible">—</span>
             <div class="actions">
+                <button class="btn btn-success btn-sm start-btn" id="start-${key}" onclick="startSingle('${key}')">▶</button>
                 <button class="btn btn-danger btn-sm remove-btn" onclick="removeRow('${key}')">✕</button>
             </div>
         `;
         container.appendChild(row);
         rows[key] = row;
-        rowData[key] = { phone, device, status: 'idle', eligible: false, coins: 0, message: '', deleted: false };
+        rowData[key] = { phone, device, status: 'idle', eligible: false, coins: 0, message: '', deleted: false, jsonData: null };
         summary.total++;
         updateSummary();
         addLog(phone, `Row added (${device})`);
+        
+        // Add input listener for JSON validation
+        const jsonInput = document.getElementById(`jsoninput-${key}`);
+        if (jsonInput) {
+            jsonInput.addEventListener('input', function() {
+                validatePerRowJson(key);
+            });
+        }
         return key;
     }
 
     function removeRow(key) {
         if (!rows[key]) return;
+        if (runningTasks.has(key)) stopSingle(key);
         rows[key].remove();
         delete rows[key];
         delete rowData[key];
@@ -514,8 +879,12 @@
     function removeAllRows() {
         if (Object.keys(rows).length === 0) return;
         if (!confirm('Remove all rows?')) return;
-        for (const key in rows) rows[key].remove();
+        for (const key in rows) {
+            if (runningTasks.has(key)) stopSingle(key);
+            rows[key].remove();
+        }
         rows = {}; rowData = {};
+        runningTasks.clear();
         summary = { total: 0, done: 0, eligible: 0, deleted: 0, error: 0 };
         updateSummary();
         addLog('System', 'All rows removed');
@@ -558,13 +927,36 @@
                 'game_done': 'badge-games',
                 'gullak_starting': 'badge-games',
                 'gullak_done': 'badge-games',
+                'gosats_login': 'badge-gosats_login',
+                'gosats_logged_in': 'badge-gosats_login',
+                'gosats_new': 'badge-gosats_new',
+                'gosats_onboarding_start': 'badge-gosats_onboarding_start',
+                'gosats_onboarding': 'badge-gosats_onboarding',
+                'gosats_onboarded': 'badge-gosats_onboarded',
+                'gosats_swapped': 'badge-gosats_swapped',
+                'gosats_no_coins': 'badge-gosats_no_coins',
+                'balance_info': 'badge-gosats_logged_in',
                 'deleting': 'badge-deleting',
                 'done': 'badge-done',
                 'error': 'badge-error',
-                'waiting_input': 'badge-waiting'
+                'waiting_input': 'badge-waiting',
+                'cancelled': 'badge-error',
+                'idle': 'badge-idle'
             };
-            const cls = clsMap[status] || 'badge-starting';
-            const label = status.replace(/_/g, ' ').toUpperCase();
+            const cls = clsMap[status] || 'badge-idle';
+            const labelMap = {
+                'gosats_login': '🔐 Login',
+                'gosats_logged_in': '✅ Logged In',
+                'gosats_new': '🆕 New Account',
+                'gosats_onboarding_start': '📝 Onboarding',
+                'gosats_onboarding': '📝 Onboarding...',
+                'gosats_onboarded': '🎉 Onboarded!',
+                'gosats_swapped': '🔄 Swapped',
+                'gosats_no_coins': '⛔ No Coins',
+                'balance_info': '💰 Balance',
+                'deleting': '🗑️ Deleting',
+            };
+            const label = labelMap[status] || status.replace(/_/g, ' ').toUpperCase();
             statusSpan.className = `badge ${cls}`;
             statusSpan.textContent = label;
         }
@@ -575,45 +967,83 @@
             eligEl.textContent = data.eligible ? '✅ Yes' : '❌ No';
             eligEl.className = `eligible ${data.eligible ? 'yes' : 'no'}`;
         }
-        if (data.status === 'done' || data.status === 'error') {
-            const inp = document.getElementById(`input-${key}`);
-            const sendBtn = document.getElementById(`send-${key}`);
-            if (inp) inp.disabled = true;
-            if (sendBtn) sendBtn.disabled = true;
+        const startBtn = document.getElementById(`start-${key}`);
+        if (startBtn) {
+            if (data.status === 'idle' || data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+                startBtn.disabled = false;
+                startBtn.textContent = '▶';
+            } else {
+                startBtn.disabled = true;
+                startBtn.textContent = '⏳';
+            }
+        }
+        if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+            // No OTP input to disable
+            runningTasks.delete(key);
         }
     }
 
     function showInput(key, type, message) {
-        const inp = document.getElementById(`input-${key}`);
-        const sendBtn = document.getElementById(`send-${key}`);
-        if (!inp || !sendBtn) return;
-        inp.disabled = false;
-        inp.placeholder = type === 'otp' ? 'OTP' : type === 'delete_otp' ? 'Delete OTP' : 'yes/no';
-        sendBtn.disabled = false;
-        inp.value = '';
-        inp.focus();
-        pendingInputs[key] = type;
-        const row = rows[key];
-        if (row) {
-            const statusSpan = row.querySelector('.status .badge');
-            if (statusSpan) {
-                statusSpan.className = 'badge badge-waiting';
-                statusSpan.textContent = 'WAITING INPUT';
-            }
+        // We no longer have OTP input, but keep this for compatibility
+        // Could show a notification or something
+        addLog(rowData[key].phone, `Input required (${type}): ${message} - Auto-fetching from panel.`);
+    }
+
+    // ============================================================
+    // START / STOP SINGLE
+    // ============================================================
+    function startSingle(key) {
+        if (!rows[key]) return;
+        if (runningTasks.has(key)) return;
+        const data = rowData[key];
+        if (!data.phone && !data.device) return;
+        runningTasks.add(key);
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const panelLinks = document.getElementById('panel-links').value.split('\n').filter(l => l.trim());
+        if (!panelLinks.length) {
+            alert('Please provide at least one panel link.');
+            runningTasks.delete(key);
+            return;
+        }
+        
+        // Determine JSON for this device
+        let perDeviceJson = {};
+        if (!globalJsonMode && data.jsonData) {
+            perDeviceJson[key] = data.jsonData;
+        }
+        // If global mode is active, we send globalJsonData separately (backend will use it)
+        
+        socket.send(JSON.stringify({
+            type: 'start_single',
+            panels: panelLinks,
+            phone: data.phone,
+            device: data.device,
+            mode: mode,
+            json_data: globalJsonMode ? globalJsonData : null,
+            per_device_json: perDeviceJson
+        }));
+        addLog(data.phone, `Starting single device...`);
+        const startBtn = document.getElementById(`start-${key}`);
+        if (startBtn) {
+            startBtn.disabled = true;
+            startBtn.textContent = '⏳';
         }
     }
 
-    function sendInput(key) {
-        const inp = document.getElementById(`input-${key}`);
-        if (!inp) return;
-        const value = inp.value.trim();
-        if (!value) { alert('Please enter a value'); return; }
-        socket.send(JSON.stringify({ type: 'input_response', device: key, value: value }));
-        inp.disabled = true;
-        const sendBtn = document.getElementById(`send-${key}`);
-        if (sendBtn) sendBtn.disabled = true;
-        delete pendingInputs[key];
-        addLog(rowData[key].phone, `Input sent: ${value}`);
+    function stopSingle(key) {
+        if (!rows[key]) return;
+        if (!runningTasks.has(key)) return;
+        socket.send(JSON.stringify({
+            type: 'stop_single',
+            device: key
+        }));
+        runningTasks.delete(key);
+        addLog(rowData[key].phone, `Stopping...`);
+        const startBtn = document.getElementById(`start-${key}`);
+        if (startBtn) {
+            startBtn.disabled = false;
+            startBtn.textContent = '▶';
+        }
     }
 
     // ============================================================
@@ -659,10 +1089,9 @@
     }
 
     // ============================================================
-    // START / STOP
+    // START ALL / STOP ALL
     // ============================================================
     function startAll() {
-        if (processing) return;
         const panelLinks = document.getElementById('panel-links').value.split('\n').filter(l => l.trim());
         if (!panelLinks.length) {
             alert('Please provide at least one panel link.');
@@ -670,27 +1099,44 @@
         }
         const mode = document.querySelector('input[name="mode"]:checked').value;
         const tasks = [];
+        const perDeviceJson = {};
         for (const key in rowData) {
             const data = rowData[key];
             if (!data.phone && !data.device) continue;
-            tasks.push({ phone: data.phone, device: data.device });
+            if (runningTasks.has(key)) continue;
+            if (data.status === 'idle' || data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
+                tasks.push({ phone: data.phone, device: data.device, key: key });
+                // Collect per-device JSON if not global
+                if (!globalJsonMode && data.jsonData) {
+                    perDeviceJson[key] = data.jsonData;
+                }
+            }
         }
         if (!tasks.length) {
-            alert('No rows to process. Add rows using "Add Row", "Bulk Add", "Load Sample", or "Fetch Devices".');
+            alert('No idle or completed rows to process.');
             return;
         }
         processing = true;
         document.getElementById('startAllBtn').disabled = true;
         document.getElementById('stopAllBtn').disabled = false;
-        const phoneLines = tasks.map(t => t.phone ? `${t.phone} ${t.device}` : t.device);
+        
+        const jsonData = globalJsonMode ? globalJsonData : null;
+        
+        const phoneLines = tasks.map(t => {
+            runningTasks.add(t.key);
+            if (t.phone) return `${t.phone} ${t.device}`;
+            else return t.device;
+        });
         socket.send(JSON.stringify({
             type: 'start',
             panels: panelLinks,
             phone_input: phoneLines,
             mode: mode,
-            devices_only: false
+            devices_only: false,
+            json_data: jsonData,
+            per_device_json: perDeviceJson
         }));
-        addLog('System', `Starting ${tasks.length} tasks...`);
+        addLog('System', `Starting ${tasks.length} tasks (global JSON: ${!!jsonData}, per-device JSON: ${Object.keys(perDeviceJson).length})`);
     }
 
     function stopAll() {
@@ -701,18 +1147,80 @@
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: 'stop' }));
         }
+        for (const key in runningTasks) {
+            runningTasks.delete(key);
+            const startBtn = document.getElementById(`start-${key}`);
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.textContent = '▶';
+            }
+        }
     }
+
+    // ============================================================
+    // RESET ALL
+    // ============================================================
+    function resetAll() {
+        if (!confirm('⚠️ This will STOP all processing, REMOVE all rows, and CLEAR all logs. Are you sure?')) return;
+        if (processing) {
+            processing = false;
+            document.getElementById('startAllBtn').disabled = false;
+            document.getElementById('stopAllBtn').disabled = true;
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'reset' }));
+                socket.send(JSON.stringify({ type: 'stop' }));
+            }
+        }
+        for (const key in rows) {
+            if (runningTasks.has(key)) stopSingle(key);
+            rows[key].remove();
+        }
+        rows = {};
+        rowData = {};
+        runningTasks.clear();
+        summary = { total: 0, done: 0, eligible: 0, deleted: 0, error: 0 };
+        updateSummary();
+        const logArea = document.getElementById('logArea');
+        logArea.innerHTML = '<div class="log-entry"><span class="time">[System]</span> Reset complete</div>';
+        pendingInputs = {};
+        addLog('System', '🔄 Reset All complete. Everything cleared.');
+        closeJsonModal();
+        closeBulk();
+        
+        globalJsonMode = false;
+        globalJsonData = null;
+        document.getElementById('jsonModeBtn').classList.remove('active');
+        document.getElementById('jsonModeBtn').textContent = '📄 Global JSON';
+        // Re-enable per-row JSON fields
+        document.querySelectorAll('.json-input-field').forEach(el => {
+            el.disabled = false;
+            el.placeholder = 'Paste JSON session...';
+        });
+    }
+
+    // ============================================================
+    // KEYBOARD SHORTCUTS
+    // ============================================================
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeJsonModal();
+            closeBulk();
+        }
+        if (e.ctrlKey && e.key === 'j') {
+            e.preventDefault();
+            openJsonModal();
+        }
+    });
 
     // ============================================================
     // INIT
     // ============================================================
     window.onload = function() {
         connectSocket();
-        // Update link count
         const textarea = document.getElementById('panel-links');
         const lines = textarea.value.split('\n').filter(l => l.trim());
         document.getElementById('linkCount').textContent = `Links: ${lines.length}`;
-        // Auto-load sample rows
+        document.getElementById('startAllBtn').disabled = false;
         loadSampleRows();
     };
 </script>
