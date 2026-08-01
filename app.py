@@ -1294,8 +1294,10 @@ account_manager = AccountManager()
 database_manager = DatabaseManager()
 worker = AutomationWorker(account_manager, database_manager)
 
-# ============ MAIN ============
 if __name__ == '__main__':
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    
     print("\n" + "=" * 60)
     print("🦅 FKCoinHunter - Web Panel (10 Concurrent Workers)")
     print("=" * 60)
@@ -1304,14 +1306,8 @@ if __name__ == '__main__':
     print(f"Workers: {MAX_WORKERS} concurrent")
     print(f"Hits Saved: {len(account_manager.get_hits())}")
     print("=" * 60)
-    print("\n🌐 Starting web server...")
-    print("📱 Open your browser and go to: http://localhost:5000")
+    print(f"\n🌐 Starting web server on port {port}...")
     print("=" * 60 + "\n")
     
-    def open_browser():
-        time.sleep(1)
-        webbrowser.open('http://localhost:5000')
-    
-    threading.Thread(target=open_browser, daemon=True).start()
-    
-    socketio.run(app, host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+    # Use eventlet for production
+    socketio.run(app, host='0.0.0.0', port=port, debug=False)
