@@ -1310,4 +1310,11 @@ if __name__ == '__main__':
     print("=" * 60 + "\n")
     
     # Use eventlet for production
-    socketio.run(app, host='0.0.0.0', port=port, debug=False)
+    socketio.run(
+    app,
+    host="0.0.0.0",
+    port=5000,
+    debug=False,
+    use_reloader=False,
+    allow_unsafe_werkzeug=True
+)
